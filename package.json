@@ -45,9 +45,9 @@
     "registry": "https://registry.npmjs.org"
   },
   "dependencies": {
-    "@metaplex-foundation/beet": "^0.1.0",
-    "@metaplex-foundation/beet-solana": "^0.1.1",
-    "@solana/web3.js": "^1.36.0",
+    "@j0nnyboi/beet": "^0.1.0",
+    "@j0nnyboi/beet-safecoin": "^0.1.0",
+    "@safecoin/web3.js": "^1.36.0",
     "camelcase": "^6.2.1",
     "debug": "^4.3.3",
     "js-sha256": "^0.9.0",
@@ -56,8 +56,8 @@
     "spok": "^1.4.3"
   },
   "devDependencies": {
-    "@metaplex-foundation/amman": "^0.0.9",
-    "@project-serum/anchor": "^0.19.1-beta.1",
+    "@j0nnyboi/amman": "^0.0.9",
+    "@j0nnyboi/anchor": "^0.1.0",
     "@types/debug": "^4.1.7",
     "@types/eslint": "^8.2.2",
     "@types/node": "^16.11.12",

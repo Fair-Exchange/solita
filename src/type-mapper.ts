@@ -23,11 +23,11 @@ import {
   BEET_PACKAGE,
   SupportedTypeDefinition,
   supportedTypeMap as beetSupportedTypeMap,
-} from '@metaplex-foundation/beet'
+} from '@j0nnyboi/beet'
 import {
   BeetSolanaTypeMapKey,
   supportedTypeMap as beetSolanaSupportedTypeMap,
-} from '@metaplex-foundation/beet-solana'
+} from '@j0nnyboi/beet-safecoin'
 import {
   assertKnownSerdePackage,
   SerdePackage,

@@ -6,11 +6,11 @@ import {
   BeetExports,
   BeetTypeMapKey,
   SupportedTypeDefinition,
-} from '@metaplex-foundation/beet'
+} from '@j0nnyboi/beet'
 import {
   BeetSolanaExports,
   BeetSolanaTypeMapKey,
-} from '@metaplex-foundation/beet-solana'
+} from '@j0nnyboi/beet-safecoin'
 import { SerdePackage } from './serdes'
 
 // -----------------
@@ -208,8 +208,8 @@ export function isIdlInstructionAccountWithDesc(
 // -----------------
 // Packages
 // -----------------
-export const BEET_PACKAGE = '@metaplex-foundation/beet'
-export const BEET_SOLANA_PACKAGE = '@metaplex-foundation/beet-solana'
+export const BEET_PACKAGE = '@j0nnyboi/beet'
+export const BEET_SOLANA_PACKAGE = '@j0nnyboi/beet-safecoin'
 export const SOLANA_WEB3_PACKAGE = '@solana/web3.js'
 export const SOLANA_SPL_TOKEN_PACKAGE = '@solana/spl-token'
 export const BEET_EXPORT_NAME = 'beet'

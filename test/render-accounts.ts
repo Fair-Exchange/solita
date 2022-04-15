@@ -1,4 +1,4 @@
-import { BEET_PACKAGE } from '@metaplex-foundation/beet'
+import { BEET_PACKAGE } from '@j0nnyboi/beet'
 import test, { Test } from 'tape'
 import { renderAccount } from '../src/render-account'
 import { SerdePackage } from '../src/serdes'

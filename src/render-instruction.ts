@@ -18,7 +18,7 @@ import {
   ResolvedKnownPubkey,
   resolveKnownPubkey,
 } from './known-pubkeys'
-import { BEET_PACKAGE } from '@metaplex-foundation/beet'
+import { BEET_PACKAGE } from '@j0nnyboi/beet'
 import { renderScalarEnums } from './render-enums'
 import { InstructionDiscriminator } from './instruction-discriminator'
 import { PathLike } from 'fs'
