@@ -1,12 +1,12 @@
 import {
   IdlInstruction,
   IdlInstructionArg,
-  SOLANA_WEB3_EXPORT_NAME,
+  SAFECOIN_WEB3_EXPORT_NAME,
   IdlInstructionAccount,
-  SOLANA_SPL_TOKEN_PACKAGE,
-  SOLANA_SPL_TOKEN_EXPORT_NAME,
+  SAFECOIN_SPL_TOKEN_PACKAGE,
+  SAFECOIN_SPL_TOKEN_EXPORT_NAME,
   TypeMappedSerdeField,
-  SOLANA_WEB3_PACKAGE,
+  SAFECOIN_WEB3_PACKAGE,
   isIdlInstructionAccountWithDesc,
 } from './types'
 import { strict as assert } from 'assert'
@@ -94,13 +94,13 @@ export type ${this.argsTypename} = {
   private renderImports(processedKeys: ProcessedAccountKey[]) {
     const typeMapperImports = this.typeMapper.importsUsed(
       this.fullFileDir.toString(),
-      new Set([SOLANA_WEB3_PACKAGE, BEET_PACKAGE])
+      new Set([SAFECOIN_WEB3_PACKAGE, BEET_PACKAGE])
     )
     const needsSplToken = processedKeys.some(
-      (x) => x.knownPubkey?.pack === SOLANA_SPL_TOKEN_PACKAGE
+      (x) => x.knownPubkey?.pack === SAFECOIN_SPL_TOKEN_PACKAGE
     )
     const splToken = needsSplToken
-      ? `\nimport * as ${SOLANA_SPL_TOKEN_EXPORT_NAME} from '${SOLANA_SPL_TOKEN_PACKAGE}';`
+      ? `\nimport * as ${SAFECOIN_SPL_TOKEN_EXPORT_NAME} from '${SAFECOIN_SPL_TOKEN_PACKAGE}';`
       : ''
 
     return `
@@ -180,7 +180,7 @@ ${typeMapperImports.join('\n')}`.trim()
   }
 
   private renderAccountsType(processedKeys: ProcessedAccountKey[]) {
-    const web3 = SOLANA_WEB3_EXPORT_NAME
+    const web3 = SAFECOIN_WEB3_EXPORT_NAME
     const fields = processedKeys
       .filter((x) => x.knownPubkey == null)
       .map((x) => {
@@ -281,7 +281,7 @@ ${struct}`.trim()
     const instructionDisc = this.instructionDiscriminator.renderValue()
     const enums = renderScalarEnums(this.typeMapper.scalarEnumsUsed).join('\n')
 
-    const web3 = SOLANA_WEB3_EXPORT_NAME
+    const web3 = SAFECOIN_WEB3_EXPORT_NAME
     const imports = this.renderImports(processedKeys)
 
     const [

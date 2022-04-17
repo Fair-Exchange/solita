@@ -8,8 +8,8 @@ import {
   SupportedTypeDefinition,
 } from '@j0nnyboi/beet'
 import {
-  BeetSolanaExports,
-  BeetSolanaTypeMapKey,
+  BeetSafecoinExports,
+  BeetSafecoinTypeMapKey,
 } from '@j0nnyboi/beet-safecoin'
 import { SerdePackage } from './serdes'
 
@@ -136,9 +136,9 @@ export type ShankMetadata = Idl['metadata'] & { origin: 'shank' }
 // De/Serializers + Extensions
 // -----------------
 export type PrimaryTypeMap = Record<
-  BeetTypeMapKey | BeetSolanaTypeMapKey,
+  BeetTypeMapKey | BeetSafecoinTypeMapKey,
   SupportedTypeDefinition & {
-    beet: BeetExports | BeetSolanaExports
+    beet: BeetExports | BeetSafecoinExports
   }
 >
 export type ProcessedSerde = {
@@ -209,10 +209,10 @@ export function isIdlInstructionAccountWithDesc(
 // Packages
 // -----------------
 export const BEET_PACKAGE = '@j0nnyboi/beet'
-export const BEET_SOLANA_PACKAGE = '@j0nnyboi/beet-safecoin'
-export const SOLANA_WEB3_PACKAGE = '@solana/web3.js'
-export const SOLANA_SPL_TOKEN_PACKAGE = '@solana/spl-token'
+export const BEET_SAFECOIN_PACKAGE = '@j0nnyboi/beet-safecoin'
+export const SAFECOIN_WEB3_PACKAGE = '@safecoin/web3.js'
+export const SAFECOIN_SPL_TOKEN_PACKAGE = '@safecoin/spl-token'
 export const BEET_EXPORT_NAME = 'beet'
-export const BEET_SOLANA_EXPORT_NAME = 'beetSolana'
-export const SOLANA_WEB3_EXPORT_NAME = 'web3'
-export const SOLANA_SPL_TOKEN_EXPORT_NAME = 'splToken'
+export const BEET_SAFECOIN_EXPORT_NAME = 'beetSafecoin'
+export const SAFECOIN_WEB3_EXPORT_NAME = 'web3'
+export const SAFECOIN_SPL_TOKEN_EXPORT_NAME = 'splToken'

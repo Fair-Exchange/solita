@@ -25,8 +25,8 @@ import {
   supportedTypeMap as beetSupportedTypeMap,
 } from '@j0nnyboi/beet'
 import {
-  BeetSolanaTypeMapKey,
-  supportedTypeMap as beetSolanaSupportedTypeMap,
+  BeetSafecoinTypeMapKey,
+  supportedTypeMap as beetSafecoinSupportedTypeMap,
 } from '@j0nnyboi/beet-safecoin'
 import {
   assertKnownSerdePackage,
@@ -341,7 +341,7 @@ export class TypeMapper {
   assertBeetSupported(
     serde: IdlType,
     context: string
-  ): asserts serde is BeetTypeMapKey | BeetSolanaTypeMapKey {
+  ): asserts serde is BeetTypeMapKey | BeetSafecoinTypeMapKey {
     assert(
       this.primaryTypeMap[serde as keyof PrimaryTypeMap] != null,
       `Types to ${context} need to be supported by Beet, ${serde} is not`
@@ -359,6 +359,6 @@ export class TypeMapper {
 
   static defaultPrimaryTypeMap: PrimaryTypeMap = {
     ...beetSupportedTypeMap,
-    ...beetSolanaSupportedTypeMap,
+    ...beetSafecoinSupportedTypeMap,
   }
 }

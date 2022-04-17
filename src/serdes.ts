@@ -2,28 +2,28 @@ import { strict as assert } from 'assert'
 import {
   BEET_EXPORT_NAME,
   BEET_PACKAGE,
-  BEET_SOLANA_EXPORT_NAME,
-  BEET_SOLANA_PACKAGE,
-  SOLANA_WEB3_EXPORT_NAME,
-  SOLANA_WEB3_PACKAGE,
+  BEET_SAFECOIN_EXPORT_NAME,
+  BEET_SAFECOIN_PACKAGE,
+  SAFECOIN_WEB3_EXPORT_NAME,
+  SAFECOIN_WEB3_PACKAGE,
   TypeMappedSerdeField,
 } from './types'
 
 export type SerdePackage =
   | typeof BEET_PACKAGE
-  | typeof BEET_SOLANA_PACKAGE
-  | typeof SOLANA_WEB3_PACKAGE
+  | typeof BEET_SAFECOIN_PACKAGE
+  | typeof SAFECOIN_WEB3_PACKAGE
 
 export type SerdePackageExportName =
   | typeof BEET_EXPORT_NAME
-  | typeof BEET_SOLANA_EXPORT_NAME
-  | typeof SOLANA_WEB3_EXPORT_NAME
+  | typeof BEET_SAFECOIN_EXPORT_NAME
+  | typeof SAFECOIN_WEB3_EXPORT_NAME
 
 export const serdePackages: Map<SerdePackage, SerdePackageExportName> = new Map(
   [
     [BEET_PACKAGE, BEET_EXPORT_NAME],
-    [BEET_SOLANA_PACKAGE, BEET_SOLANA_EXPORT_NAME],
-    [SOLANA_WEB3_PACKAGE, SOLANA_WEB3_EXPORT_NAME],
+    [BEET_SAFECOIN_PACKAGE, BEET_SAFECOIN_EXPORT_NAME],
+    [SAFECOIN_WEB3_PACKAGE, SAFECOIN_WEB3_EXPORT_NAME],
   ]
 )
 
@@ -65,8 +65,8 @@ export function serdePackageTypePrefix(pack: SerdePackage | undefined): string {
 export function isKnownSerdePackage(pack: string): pack is SerdePackage {
   return (
     pack === BEET_PACKAGE ||
-    pack === BEET_SOLANA_PACKAGE ||
-    pack === SOLANA_WEB3_PACKAGE
+    pack === BEET_SAFECOIN_PACKAGE ||
+    pack === SAFECOIN_WEB3_PACKAGE
   )
 }
 
