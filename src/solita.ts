@@ -6,6 +6,7 @@ import { renderInstruction } from './render-instruction'
 import { determineTypeIsFixable, renderType } from './render-type'
 import { strict as assert } from 'assert'
 import {
+  TypeAliases,
   Idl,
   IdlType,
   isIdlDefinedType,
@@ -13,9 +14,15 @@ import {
   isIdlTypeEnum,
   isShankIdl,
   SOLANA_WEB3_PACKAGE,
+  PrimitiveTypeKey,
+  Serializers,
+  IdlTypeDataEnum,
+  IdlTypeEnum,
+  IdlDefinedType,
 } from './types'
 import {
   logDebug,
+  logError,
   logInfo,
   logTrace,
   prepareTargetDir,
@@ -23,12 +30,10 @@ import {
 } from './utils'
 import { format, Options } from 'prettier'
 import { Paths } from './paths'
+import { CustomSerializers } from './serializers'
+import { renderAccountProviders } from './render-account-providers'
 
 export * from './types'
-
-function renderImportIndex(modules: string[]) {
-  return modules.map((x) => `export * from './${x}';`).join('\n')
-}
 
 const DEFAULT_FORMAT_OPTS: Options = {
   semi: false,
@@ -46,6 +51,10 @@ export class Solita {
   private readonly formatOpts: Options
   private readonly accountsHaveImplicitDiscriminator: boolean
   private readonly prependGeneratedWarning: boolean
+  private readonly typeAliases: Map<string, PrimitiveTypeKey>
+  private readonly serializers: CustomSerializers
+  private readonly projectRoot: string
+  private readonly hasInstructions: boolean
   private paths: Paths | undefined
   constructor(
     private readonly idl: Idl,
@@ -53,22 +62,35 @@ export class Solita {
       formatCode = false,
       formatOpts = {},
       prependGeneratedWarning = true,
+      typeAliases = {},
+      serializers = {},
+      projectRoot = process.cwd(),
     }: {
       formatCode?: boolean
       formatOpts?: Options
       prependGeneratedWarning?: boolean
+      typeAliases?: TypeAliases
+      serializers?: Serializers
+      projectRoot?: string
     } = {}
   ) {
+    this.projectRoot = projectRoot
     this.formatCode = formatCode
     this.formatOpts = { ...DEFAULT_FORMAT_OPTS, ...formatOpts }
     this.prependGeneratedWarning = prependGeneratedWarning
     this.accountsHaveImplicitDiscriminator = !isShankIdl(idl)
+    this.typeAliases = new Map(Object.entries(typeAliases))
+    this.serializers = CustomSerializers.create(
+      this.projectRoot,
+      new Map(Object.entries(serializers))
+    )
+    this.hasInstructions = idl.instructions.length > 0
   }
 
   // -----------------
   // Extract
   // -----------------
-  accountFilesByType() {
+  private accountFilesByType() {
     assert(this.paths != null, 'should have set paths')
     return new Map(
       this.idl.accounts?.map((x) => [
@@ -78,14 +100,16 @@ export class Solita {
     )
   }
 
-  customFilesByType() {
+  private customFilesByType() {
     assert(this.paths != null, 'should have set paths')
     return new Map(
       this.idl.types?.map((x) => [x.name, this.paths!.typeFile(x.name)]) ?? []
     )
   }
 
-  resolveFieldType = (typeName: string) => {
+  private resolveFieldType = (
+    typeName: string
+  ): IdlDefinedType | IdlTypeEnum | IdlTypeDataEnum | null => {
     for (const acc of this.idl.accounts ?? []) {
       if (acc.name === typeName) return acc.type
     }
@@ -152,6 +176,7 @@ export class Solita {
           this.paths!.typesDir,
           accountFiles,
           customFiles,
+          this.typeAliases,
           forceFixable
         )
         // If the type by itself does not need to be fixable, here we detect if
@@ -167,8 +192,8 @@ export class Solita {
           try {
             code = format(code, this.formatOpts)
           } catch (err) {
-            console.error(`Failed to format ${ty.name} instruction`)
-            console.error(err)
+            logError(`Failed to format ${ty.name} instruction`)
+            logError(err)
           }
         }
         types[ty.name] = code
@@ -189,6 +214,7 @@ export class Solita {
         programId,
         accountFiles,
         customFiles,
+        this.typeAliases,
         forceFixable
       )
       if (this.prependGeneratedWarning) {
@@ -198,8 +224,8 @@ export class Solita {
         try {
           code = format(code, this.formatOpts)
         } catch (err) {
-          console.error(`Failed to format ${ix.name} instruction`)
-          console.error(err)
+          logError(`Failed to format ${ix.name} instruction`)
+          logError(err)
         }
       }
       instructions[ix.name] = code
@@ -217,7 +243,10 @@ export class Solita {
         this.paths.accountsDir,
         accountFiles,
         customFiles,
+        this.typeAliases,
+        this.serializers,
         forceFixable,
+        programId,
         this.resolveFieldType,
         this.accountsHaveImplicitDiscriminator
       )
@@ -228,8 +257,8 @@ export class Solita {
         try {
           code = format(code, this.formatOpts)
         } catch (err) {
-          console.error(`Failed to format ${account.name} account`)
-          console.error(err)
+          logError(`Failed to format ${account.name} account`)
+          logError(err)
         }
       }
       accounts[account.name] = code
@@ -248,8 +277,8 @@ export class Solita {
       try {
         errors = format(errors, this.formatOpts)
       } catch (err) {
-        console.error(`Failed to format errors`)
-        console.error(err)
+        logError(`Failed to format errors`)
+        logError(err)
       }
     }
 
@@ -259,8 +288,12 @@ export class Solita {
   async renderAndWriteTo(outputDir: PathLike) {
     this.paths = new Paths(outputDir)
     const { instructions, accounts, types, errors } = this.renderCode()
-    const reexports = ['instructions']
-    await this.writeInstructions(instructions)
+    const reexports = []
+
+    if (this.hasInstructions) {
+      reexports.push('instructions')
+      await this.writeInstructions(instructions)
+    }
 
     if (Object.keys(accounts).length !== 0) {
       reexports.push('accounts')
@@ -285,13 +318,19 @@ export class Solita {
     assert(this.paths != null, 'should have set paths')
 
     await prepareTargetDir(this.paths.instructionsDir)
-    logInfo('Writing instructions to directory: %s', this.paths.instructionsDir)
+    logInfo(
+      'Writing instructions to directory: %s',
+      this.paths.relInstructionsDir
+    )
     for (const [name, code] of Object.entries(instructions)) {
       logDebug('Writing instruction: %s', name)
       await fs.writeFile(this.paths.instructionFile(name), code, 'utf8')
     }
     logDebug('Writing index.ts exporting all instructions')
-    const indexCode = renderImportIndex(Object.keys(instructions).sort())
+    const indexCode = this.renderImportIndex(
+      Object.keys(instructions).sort(),
+      'instructions'
+    )
     await fs.writeFile(this.paths.instructionFile('index'), indexCode, 'utf8')
   }
 
@@ -302,13 +341,18 @@ export class Solita {
     assert(this.paths != null, 'should have set paths')
 
     await prepareTargetDir(this.paths.accountsDir)
-    logInfo('Writing accounts to directory: %s', this.paths.accountsDir)
+    logInfo('Writing accounts to directory: %s', this.paths.relAccountsDir)
     for (const [name, code] of Object.entries(accounts)) {
       logDebug('Writing account: %s', name)
       await fs.writeFile(this.paths.accountFile(name), code, 'utf8')
     }
     logDebug('Writing index.ts exporting all accounts')
-    const indexCode = renderImportIndex(Object.keys(accounts).sort())
+    const accountProvidersCode = renderAccountProviders(this.idl.accounts)
+    const indexCode = this.renderImportIndex(
+      Object.keys(accounts).sort(),
+      'accounts',
+      accountProvidersCode
+    )
     await fs.writeFile(this.paths.accountFile('index'), indexCode, 'utf8')
   }
 
@@ -319,7 +363,7 @@ export class Solita {
     assert(this.paths != null, 'should have set paths')
 
     await prepareTargetDir(this.paths.typesDir)
-    logInfo('Writing types to directory: %s', this.paths.typesDir)
+    logInfo('Writing types to directory: %s', this.paths.relTypesDir)
     for (const [name, code] of Object.entries(types)) {
       logDebug('Writing type: %s', name)
       await fs.writeFile(this.paths.typeFile(name), code, 'utf8')
@@ -329,7 +373,7 @@ export class Solita {
     // NOTE: this allows account types to be referenced via `defined.<AccountName>`, however
     // it would break if we have an account used that way, but no types
     // If that occurs we need to generate the `types/index.ts` just reexporting accounts
-    const indexCode = renderImportIndex(reexports.sort())
+    const indexCode = this.renderImportIndex(reexports.sort(), 'types')
     await fs.writeFile(this.paths.typeFile('index'), indexCode, 'utf8')
   }
 
@@ -340,7 +384,7 @@ export class Solita {
     assert(this.paths != null, 'should have set paths')
 
     await prepareTargetDir(this.paths.errorsDir)
-    logInfo('Writing errors to directory: %s', this.paths.errorsDir)
+    logInfo('Writing errors to directory: %s', this.paths.relErrorsDir)
     logDebug('Writing index.ts containing all errors')
     await fs.writeFile(this.paths.errorFile('index'), errorsCode, 'utf8')
   }
@@ -349,11 +393,11 @@ export class Solita {
   // Main Index File
   // -----------------
 
-  async writeMainIndex(reexports: string[]) {
+  private async writeMainIndex(reexports: string[]) {
     assert(this.paths != null, 'should have set paths')
 
     const programAddress = this.idl.metadata.address
-    const reexportCode = renderImportIndex(reexports.sort())
+    const reexportCode = this.renderImportIndex(reexports.sort(), 'main')
     const imports = `import { PublicKey } from '${SOLANA_WEB3_PACKAGE}'`
     const programIdConsts = `
 /**
@@ -365,7 +409,7 @@ export class Solita {
 export const PROGRAM_ADDRESS = '${programAddress}'
 
 /**
- * Program publick key
+ * Program public key
  *
  * @category constants
  * @category generated
@@ -382,11 +426,30 @@ ${programIdConsts}
       try {
         code = format(code, this.formatOpts)
       } catch (err) {
-        console.error(`Failed to format mainIndex`)
-        console.error(err)
+        logError(`Failed to format mainIndex`)
+        logError(err)
       }
     }
-
     await fs.writeFile(path.join(this.paths.root, `index.ts`), code, 'utf8')
+  }
+
+  private renderImportIndex(
+    modules: string[],
+    label: string,
+    extraContent?: string
+  ) {
+    let code = modules.map((x) => `export * from './${x}';`).join('\n')
+    if (extraContent != null) {
+      code += `\n\n${extraContent}`
+    }
+    if (this.formatCode) {
+      try {
+        code = format(code, this.formatOpts)
+      } catch (err) {
+        logError(`Failed to format ${label} imports`)
+        logError(err)
+      }
+    }
+    return code
   }
 }

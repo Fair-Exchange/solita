@@ -3,12 +3,18 @@ import {
   BEET_PACKAGE,
   IdlDefinedTypeDefinition,
   IdlField,
+  isIdlTypeDataEnum,
   isIdlTypeEnum,
+  PrimitiveTypeKey,
 } from './types'
 import { strict as assert } from 'assert'
 import { renderTypeDataStruct, serdePackageExportName } from './serdes'
 import { renderScalarEnum } from './render-enums'
 import { PathLike } from 'fs'
+import {
+  renderDataEnumRecord,
+  renderTypeDataEnumBeet,
+} from './render-data-enum'
 
 export function beetVarNameFromTypeName(ty: string) {
   const camelTyName = ty.charAt(0).toLowerCase().concat(ty.slice(1))
@@ -42,6 +48,13 @@ class TypeRenderer {
   }
 
   private renderTypeScriptType() {
+    if (isIdlTypeDataEnum(this.ty.type)) {
+      return renderDataEnumRecord(
+        this.typeMapper,
+        this.ty.name,
+        this.ty.type.variants
+      )
+    }
     if (isIdlTypeEnum(this.ty.type)) {
       return renderScalarEnum(
         this.ty.name,
@@ -64,14 +77,26 @@ class TypeRenderer {
   // Imports
   // -----------------
   private renderImports() {
-    const imports = this.typeMapper.importsUsed(this.fullFileDir)
+    const imports = this.typeMapper.importsUsed(
+      this.fullFileDir,
+      new Set([BEET_PACKAGE])
+    )
     return imports.join('\n')
   }
 
   // -----------------
-  // Data Struct
+  // Data Struct/Enum
   // -----------------
   private renderDataStructOrEnum() {
+    if (isIdlTypeDataEnum(this.ty.type)) {
+      return renderTypeDataEnumBeet({
+        typeMapper: this.typeMapper,
+        dataEnum: this.ty.type,
+        beetVarName: this.beetArgName,
+        typeName: this.upperCamelTyName,
+      })
+    }
+
     if (isIdlTypeEnum(this.ty.type)) {
       const serde = this.typeMapper.mapSerde(this.ty.type, this.ty.name)
       const enumTy = this.typeMapper.map(this.ty.type, this.ty.name)
@@ -79,16 +104,17 @@ class TypeRenderer {
       const exp = serdePackageExportName(BEET_PACKAGE)
       // Need the cast here since otherwise type is assumed to be
       // FixedSizeBeet<typeof ${enumTy}, typeof ${enumTy}> which is incorrect
-      return `const ${this.beetArgName} = ${serde} as ${exp}.FixedSizeBeet<${enumTy}, ${enumTy}>`
+      return `export const ${this.beetArgName} = ${serde} as ${exp}.FixedSizeBeet<${enumTy}, ${enumTy}>`
     }
 
     const mappedFields = this.typeMapper.mapSerdeFields(this.ty.type.fields)
-    return renderTypeDataStruct({
+    const rendered = renderTypeDataStruct({
       fields: mappedFields,
       beetVarName: this.beetArgName,
       typeName: this.upperCamelTyName,
       isFixable: this.typeMapper.usedFixableSerde,
     })
+    return `export ${rendered}`
   }
 
   private renderDataStructs() {
@@ -125,7 +151,7 @@ ${typeScriptType}
  * @category userTypes
  * @category generated
  */
-export ${dataStruct}
+${dataStruct}
 `.trim()
   }
 }
@@ -150,11 +176,13 @@ export function renderType(
   fullFileDir: PathLike,
   accountFilesByType: Map<string, string>,
   customFilesByType: Map<string, string>,
+  typeAliases: Map<string, PrimitiveTypeKey>,
   forceFixable: ForceFixable
 ) {
   const typeMapper = new TypeMapper(
     accountFilesByType,
     customFilesByType,
+    typeAliases,
     forceFixable
   )
   const renderer = new TypeRenderer(ty, fullFileDir, typeMapper)

@@ -602,7 +602,7 @@ test('type-mapper: imports for serde packages used ', (t) => {
     }
     const imports = tm.importsUsed(SOME_FILE_DIR)
     spok(t, imports, [
-      `import * as web3 from '@solana/web3.js';`,
+      `import * as web3 from '@safecoin/web3.js';`,
       `import * as beet from '@j0nnyboi/beet';`,
       `import * as beetSolana from '@j0nnyboi/beet-safecoin';`,
     ])
@@ -619,5 +619,46 @@ test('type-mapper: imports for serde packages used ', (t) => {
     const imports = tm.importsUsed(SOME_FILE_DIR)
     spok(t, imports, [`import * as beet from '@j0nnyboi/beet';`])
   }
+  t.end()
+})
+
+// -----------------
+// Type Aliases
+// -----------------
+test('type-mapper: user defined - aliased', (t) => {
+  const type = <IdlType>{
+    defined: 'UnixTimestamp',
+  }
+  {
+    t.comment('+++ when alias not provided')
+    const tm = new TypeMapper(new Map(), new Map())
+
+    t.throws(
+      () => tm.map(type),
+      /unknown type UnixTimestamp/i,
+      'throws unknown type error'
+    )
+  }
+  {
+    t.comment('+++ when alias provided')
+    const tm = new TypeMapper(
+      new Map(),
+      new Map(),
+      new Map([['UnixTimestamp', 'i64']])
+    )
+    const ty = tm.map(type)
+    t.equal(ty, 'beet.bignum')
+
+    const serde = tm.mapSerde(type)
+    t.equal(serde, 'beet.i64')
+
+    spok(t, Array.from(tm.serdePackagesUsed), {
+      $topic: 'serdePackagesUsed',
+      ...[BEET_PACKAGE],
+    })
+    t.equal(tm.localImportsByPath.size, 0, 'did not use local imports')
+    t.notOk(tm.usedFixableSerde, 'did not use fixable serde')
+  }
+
   t.end()
 })

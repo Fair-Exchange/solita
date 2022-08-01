@@ -14,6 +14,7 @@ import {
   isIdlTypeOption,
   isIdlTypeVec,
   PrimaryTypeMap,
+  PrimitiveTypeKey,
   TypeMappedSerdeField,
 } from './types'
 import { getOrCreate, logDebug, withoutTsExtension } from './utils'
@@ -25,8 +26,8 @@ import {
   supportedTypeMap as beetSupportedTypeMap,
 } from '@j0nnyboi/beet'
 import {
-  BeetSafecoinTypeMapKey,
-  supportedTypeMap as beetSafecoinSupportedTypeMap,
+  BeetSolanaTypeMapKey,
+  supportedTypeMap as beetSolanaSupportedTypeMap,
 } from '@j0nnyboi/beet-safecoin'
 import {
   assertKnownSerdePackage,
@@ -60,6 +61,8 @@ export class TypeMapper {
     private readonly accountTypesPaths: Map<string, string> = new Map(),
     /** Custom types mapped { typeName: fullPath } */
     private readonly customTypesPaths: Map<string, string> = new Map(),
+    /** Aliases mapped { alias: actualType } */
+    private readonly typeAliases: Map<string, PrimitiveTypeKey> = new Map(),
     private readonly forceFixable: ForceFixable = FORCE_FIXABLE_NEVER,
     private readonly primaryTypeMap: PrimaryTypeMap = TypeMapper.defaultPrimaryTypeMap
   ) {}
@@ -69,6 +72,16 @@ export class TypeMapper {
     this.localImportsByPath.clear()
     this.usedFixableSerde = false
     this.scalarEnumsUsed.clear()
+  }
+
+  clone() {
+    return new TypeMapper(
+      this.accountTypesPaths,
+      this.customTypesPaths,
+      this.typeAliases,
+      this.forceFixable,
+      this.primaryTypeMap
+    )
   }
 
   private updateUsedFixableSerde(ty: SupportedTypeDefinition) {
@@ -92,7 +105,7 @@ export class TypeMapper {
   // -----------------
   // Map TypeScript Type
   // -----------------
-  private mapPrimitiveType(ty: IdlType & string, name: string) {
+  private mapPrimitiveType(ty: PrimitiveTypeKey, name: string) {
     this.assertBeetSupported(ty, 'map primitive type')
     const mapped = this.primaryTypeMap[ty]
     let typescriptType = mapped.ts
@@ -160,7 +173,10 @@ export class TypeMapper {
       return this.mapArrayType(ty, name)
     }
     if (isIdlTypeDefined(ty)) {
-      return this.mapDefinedType(ty)
+      const alias = this.typeAliases.get(ty.defined)
+      return alias == null
+        ? this.mapDefinedType(ty)
+        : this.mapPrimitiveType(alias, name)
     }
     if (isIdlTypeEnum(ty)) {
       return this.mapEnumType(ty, name)
@@ -172,7 +188,7 @@ export class TypeMapper {
   // -----------------
   // Map Serde
   // -----------------
-  private mapPrimitiveSerde(ty: IdlType & string, name: string) {
+  private mapPrimitiveSerde(ty: PrimitiveTypeKey, name: string) {
     this.assertBeetSupported(ty, `account field ${name}`)
 
     if (ty === 'string') return this.mapStringSerde(ty)
@@ -279,7 +295,10 @@ export class TypeMapper {
       return this.mapEnumSerde(ty, name)
     }
     if (isIdlTypeDefined(ty)) {
-      return this.mapDefinedSerde(ty)
+      const alias = this.typeAliases.get(ty.defined)
+      return alias == null
+        ? this.mapDefinedSerde(ty)
+        : this.mapPrimitiveSerde(alias, name)
     }
     throw new Error(`Type ${ty} required for ${name} is not yet supported`)
   }
@@ -341,7 +360,7 @@ export class TypeMapper {
   assertBeetSupported(
     serde: IdlType,
     context: string
-  ): asserts serde is BeetTypeMapKey | BeetSafecoinTypeMapKey {
+  ): asserts serde is BeetTypeMapKey | BeetSolanaTypeMapKey {
     assert(
       this.primaryTypeMap[serde as keyof PrimaryTypeMap] != null,
       `Types to ${context} need to be supported by Beet, ${serde} is not`
@@ -359,6 +378,6 @@ export class TypeMapper {
 
   static defaultPrimaryTypeMap: PrimaryTypeMap = {
     ...beetSupportedTypeMap,
-    ...beetSafecoinSupportedTypeMap,
+    ...beetSolanaSupportedTypeMap,
   }
 }

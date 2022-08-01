@@ -1,13 +1,14 @@
 import {
   IdlInstruction,
   IdlInstructionArg,
-  SAFECOIN_WEB3_EXPORT_NAME,
+  SOLANA_WEB3_EXPORT_NAME,
   IdlInstructionAccount,
-  SAFECOIN_SPL_TOKEN_PACKAGE,
-  SAFECOIN_SPL_TOKEN_EXPORT_NAME,
+  SOLANA_SPL_TOKEN_PACKAGE,
+  SOLANA_SPL_TOKEN_EXPORT_NAME,
   TypeMappedSerdeField,
-  SAFECOIN_WEB3_PACKAGE,
+  SOLANA_WEB3_PACKAGE,
   isIdlInstructionAccountWithDesc,
+  PrimitiveTypeKey,
 } from './types'
 import { strict as assert } from 'assert'
 import { ForceFixable, TypeMapper } from './type-mapper'
@@ -36,6 +37,7 @@ class InstructionRenderer {
   readonly instructionDiscriminatorName: string
   readonly structArgName: string
   private readonly instructionDiscriminator: InstructionDiscriminator
+  private readonly programIdPubkey: string
 
   constructor(
     readonly ix: IdlInstruction,
@@ -60,6 +62,7 @@ class InstructionRenderer {
       'instructionDiscriminator',
       typeMapper
     )
+    this.programIdPubkey = `new ${SOLANA_WEB3_EXPORT_NAME}.PublicKey('${this.programId}')`
   }
 
   // -----------------
@@ -94,13 +97,13 @@ export type ${this.argsTypename} = {
   private renderImports(processedKeys: ProcessedAccountKey[]) {
     const typeMapperImports = this.typeMapper.importsUsed(
       this.fullFileDir.toString(),
-      new Set([SAFECOIN_WEB3_PACKAGE, BEET_PACKAGE])
+      new Set([SOLANA_WEB3_PACKAGE, BEET_PACKAGE])
     )
     const needsSplToken = processedKeys.some(
-      (x) => x.knownPubkey?.pack === SAFECOIN_SPL_TOKEN_PACKAGE
+      (x) => x.knownPubkey?.pack === SOLANA_SPL_TOKEN_PACKAGE
     )
     const splToken = needsSplToken
-      ? `\nimport * as ${SAFECOIN_SPL_TOKEN_EXPORT_NAME} from '${SAFECOIN_SPL_TOKEN_PACKAGE}';`
+      ? `\nimport * as ${SOLANA_SPL_TOKEN_EXPORT_NAME} from '${SOLANA_SPL_TOKEN_PACKAGE}';`
       : ''
 
     return `
@@ -134,10 +137,15 @@ ${typeMapperImports.join('\n')}`.trim()
 
     const requiredKeys = requireds
       .map(({ name, isMut, isSigner, knownPubkey }) => {
-        const access =
-          knownPubkey == null ? name : renderKnownPubkeyAccess(knownPubkey)
+        const pubkey =
+          knownPubkey == null
+            ? `accounts.${name}`
+            : `accounts.${name} ?? ${renderKnownPubkeyAccess(
+                knownPubkey,
+                this.programIdPubkey
+              )}`
         return `{
-      pubkey: ${access},
+      pubkey: ${pubkey},
       isWritable: ${isMut.toString()},
       isSigner: ${isSigner.toString()},
     }`
@@ -147,27 +155,25 @@ ${typeMapperImports.join('\n')}`.trim()
     const optionalKeys =
       optionals.length > 0
         ? optionals
-            .map(({ name, isMut, isSigner, knownPubkey }, idx) => {
-              const access =
-                knownPubkey == null
-                  ? name
-                  : renderKnownPubkeyAccess(knownPubkey)
+            .map(({ name, isMut, isSigner }, idx) => {
               const requiredOptionals = optionals.slice(0, idx)
               const requiredChecks = requiredOptionals
-                .map((x) => `${x.name} == null`)
+                .map((x) => `accounts.${x.name} == null`)
                 .join(' || ')
               const checkRequireds =
                 requiredChecks.length > 0
                   ? `if (${requiredChecks}) { throw new Error('When providing \\'${name}\\' then ` +
                     `${requiredOptionals
-                      .map((x) => `\\'${x.name}\\'`)
+                      .map((x) => `\\'accounts.${x.name}\\'`)
                       .join(', ')} need(s) to be provided as well.') }`
                   : ''
+              // NOTE: we purposely don't add the default resolution here since the intent is to
+              // only pass that account when it is provided
               return `
-  if (${name} != null) {
+  if (accounts.${name} != null) {
     ${checkRequireds}
     keys.push({
-      pubkey: ${access},
+      pubkey: accounts.${name},
       isWritable: ${isMut.toString()},
       isSigner: ${isSigner.toString()},
     })
@@ -180,17 +186,19 @@ ${typeMapperImports.join('\n')}`.trim()
   }
 
   private renderAccountsType(processedKeys: ProcessedAccountKey[]) {
-    const web3 = SAFECOIN_WEB3_EXPORT_NAME
+    if (processedKeys.length === 0) return ''
+    const web3 = SOLANA_WEB3_EXPORT_NAME
     const fields = processedKeys
-      .filter((x) => x.knownPubkey == null)
       .map((x) => {
+        if (x.knownPubkey != null) {
+          return `${x.name}?: ${web3}.PublicKey`
+        }
         const optional = x.optional ? '?' : ''
         return `${x.name}${optional}: ${web3}.PublicKey`
       })
       .join('\n  ')
 
     const propertyComments = processedKeys
-      .filter(isIdlInstructionAccountWithDesc)
       // known pubkeys are not provided by the user and thus aren't part of the type
       .filter((x) => !isKnownPubkey(x.name))
       .map((x) => {
@@ -199,15 +207,15 @@ ${typeMapperImports.join('\n')}`.trim()
         if (x.isSigner) attrs.push('**signer**')
 
         const optional = x.optional ? ' (optional) ' : ' '
+        const desc = isIdlInstructionAccountWithDesc(x) ? x.desc : ''
         return (
-          ` * @property [${attrs.join(', ')}] ` +
-          `${x.name}${optional}${x.desc}`
+          `* @property [${attrs.join(', ')}] ` + `${x.name}${optional}${desc} `
         )
       })
 
     const properties =
       propertyComments.length > 0
-        ? `\n *\n  ${propertyComments.join('\n')}`
+        ? `\n *\n  ${propertyComments.join('\n')} `
         : ''
 
     const docs = `
@@ -219,21 +227,21 @@ ${typeMapperImports.join('\n')}`.trim()
   */
 `.trim()
     return `${docs}
-export type ${this.accountsTypename} = {
+          export type ${this.accountsTypename} = {
   ${fields}
-}
-`
+        }
+        `
   }
 
-  private renderAccountsDestructure(processedKeys: ProcessedAccountKey[]) {
-    const params = processedKeys
-      .filter((x) => x.knownPubkey == null)
-      .map((x) => `${x.name}`)
-      .join(',\n    ')
-    return `const {
-    ${params}
-  } = accounts;
-`
+  private renderAccountsParamDoc(processedKeys: ProcessedAccountKey[]) {
+    if (processedKeys.length === 0) return '  *'
+    return `  *
+  * @param accounts that will be accessed while the instruction is processed`
+  }
+
+  private renderAccountsArg(processedKeys: ProcessedAccountKey[]) {
+    if (processedKeys.length === 0) return ''
+    return `accounts: ${this.accountsTypename}, \n`
   }
 
   // -----------------
@@ -263,7 +271,7 @@ export type ${this.accountsTypename} = {
  * @category ${this.upperCamelIxName}
  * @category generated
  */
-${struct}`.trim()
+${struct} `.trim()
   }
 
   render() {
@@ -277,56 +285,57 @@ ${struct}`.trim()
     const argsStructType = this.renderDataStruct(processedArgs)
 
     const keys = this.renderIxAccountKeys(processedKeys)
-    const accountsDestructure = this.renderAccountsDestructure(processedKeys)
+    const accountsParamDoc = this.renderAccountsParamDoc(processedKeys)
+    const accountsArg = this.renderAccountsArg(processedKeys)
     const instructionDisc = this.instructionDiscriminator.renderValue()
     const enums = renderScalarEnums(this.typeMapper.scalarEnumsUsed).join('\n')
 
-    const web3 = SAFECOIN_WEB3_EXPORT_NAME
+    const web3 = SOLANA_WEB3_EXPORT_NAME
     const imports = this.renderImports(processedKeys)
 
     const [
       createInstructionArgsComment,
       createInstructionArgs,
       createInstructionArgsSpread,
+      comma,
     ] =
       this.ix.args.length === 0
-        ? ['', '', '']
+        ? ['', '', '', '']
         : [
-            `\n * @param args to provide as instruction data to the program`,
-            `args: ${this.argsTypename}`,
+            `\n * @param args to provide as instruction data to the program\n * `,
+            `args: ${this.argsTypename} `,
             '...args',
+            ', ',
           ]
+    const programIdArg = `${comma}programId = ${this.programIdPubkey}`
+
     return `${imports}
 
 ${enums}
 ${ixArgType}
 ${argsStructType}
 ${accountsType}
-const ${this.instructionDiscriminatorName} = ${instructionDisc};
+    export const ${this.instructionDiscriminatorName} = ${instructionDisc};
 
-/**
- * Creates a _${this.upperCamelIxName}_ instruction.
- * 
- * @param accounts that will be accessed while the instruction is processed${createInstructionArgsComment}
- *
- * @category Instructions
- * @category ${this.upperCamelIxName}
- * @category generated
- */
-export function create${this.upperCamelIxName}Instruction(
-  accounts: ${this.accountsTypename},
-  ${createInstructionArgs}
-) {
-  ${accountsDestructure}
-  const [data ] = ${this.structArgName}.serialize({ 
-    instructionDiscriminator: ${this.instructionDiscriminatorName},
+    /**
+     * Creates a _${this.upperCamelIxName}_ instruction.
+    ${accountsParamDoc}${createInstructionArgsComment}
+     * @category Instructions
+     * @category ${this.upperCamelIxName}
+     * @category generated
+     */
+    export function create${this.upperCamelIxName}Instruction(
+      ${accountsArg}${createInstructionArgs}${programIdArg}
+    ) {
+      const [data] = ${this.structArgName}.serialize({
+        instructionDiscriminator: ${this.instructionDiscriminatorName},
     ${createInstructionArgsSpread}
-  });
-  const keys: ${web3}.AccountMeta[] = ${keys}
-  const ix = new ${web3}.TransactionInstruction({
-    programId: new ${web3}.PublicKey('${this.programId}'),
-    keys,
-    data
+    });
+    const keys: ${web3}.AccountMeta[] = ${keys}
+    const ix = new ${web3}.TransactionInstruction({
+      programId,
+      keys,
+      data
   });
   return ix; 
 }
@@ -340,11 +349,13 @@ export function renderInstruction(
   programId: string,
   accountFilesByType: Map<string, string>,
   customFilesByType: Map<string, string>,
+  typeAliases: Map<string, PrimitiveTypeKey>,
   forceFixable: ForceFixable
 ) {
   const typeMapper = new TypeMapper(
     accountFilesByType,
     customFilesByType,
+    typeAliases,
     forceFixable
   )
   const renderer = new InstructionRenderer(
