@@ -19,7 +19,7 @@ import {
   ResolvedKnownPubkey,
   resolveKnownPubkey,
 } from './known-pubkeys'
-import { BEET_PACKAGE } from '@j0nnyboi/beet'
+import { BEET_PACKAGE } from '@safecoin/beet'
 import { renderScalarEnums } from './render-enums'
 import { InstructionDiscriminator } from './instruction-discriminator'
 import { PathLike } from 'fs'

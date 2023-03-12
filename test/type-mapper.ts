@@ -603,8 +603,8 @@ test('type-mapper: imports for serde packages used ', (t) => {
     const imports = tm.importsUsed(SOME_FILE_DIR)
     spok(t, imports, [
       `import * as web3 from '@safecoin/web3.js';`,
-      `import * as beet from '@j0nnyboi/beet';`,
-      `import * as beetSolana from '@j0nnyboi/beet-safecoin';`,
+      `import * as beet from '@safecoin/beet';`,
+      `import * as beetSolana from '@safecoin/beet-safecoin';`,
     ])
   }
 
@@ -617,7 +617,7 @@ test('type-mapper: imports for serde packages used ', (t) => {
       tm.serdePackagesUsed.add(pack)
     }
     const imports = tm.importsUsed(SOME_FILE_DIR)
-    spok(t, imports, [`import * as beet from '@j0nnyboi/beet';`])
+    spok(t, imports, [`import * as beet from '@safecoin/beet';`])
   }
   t.end()
 })

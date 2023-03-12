@@ -6,11 +6,11 @@ import {
   BeetExports,
   BeetTypeMapKey,
   SupportedTypeDefinition,
-} from '@j0nnyboi/beet'
+} from '@safecoin/beet'
 import {
   BeetSolanaExports,
   BeetSolanaTypeMapKey,
-} from '@j0nnyboi/beet-safecoin'
+} from '@safecoin/beet-safecoin'
 import { SerdePackage } from './serdes'
 import { strict as assert } from 'assert'
 
@@ -261,8 +261,8 @@ export function hasPaddingAttr(field: IdlField): boolean {
 // -----------------
 // Packages
 // -----------------
-export const BEET_PACKAGE = '@j0nnyboi/beet'
-export const BEET_SOLANA_PACKAGE = '@j0nnyboi/beet-safecoin'
+export const BEET_PACKAGE = '@safecoin/beet'
+export const BEET_SOLANA_PACKAGE = '@safecoin/beet-safecoin'
 export const SOLANA_WEB3_PACKAGE = '@safecoin/web3.js'
 export const SOLANA_SPL_TOKEN_PACKAGE = '@safecoin/safe-token'
 export const BEET_EXPORT_NAME = 'beet'

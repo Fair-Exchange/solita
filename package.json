@@ -48,8 +48,8 @@
     "registry": "https://registry.npmjs.org"
   },
   "dependencies": {
-    "@j0nnyboi/beet": "^0.4.1",
-    "@j0nnyboi/beet-safecoin": "^0.3.0",
+    "@safecoin/beet": "^0.4.1",
+    "@safecoin/beet-safecoin": "^0.3.0",
     "@safecoin/rustbin": "^0.3.0",
     "@safecoin/web3.js": "^1.36.0",
     "camelcase": "^6.2.1",
@@ -60,8 +60,8 @@
     "spok": "^1.4.3"
   },
   "devDependencies": {
-    "@j0nnyboi/amman": "^0.2.0",
-    "@safecoin/anchor": "^0.24.2",
+    "@safecoin/amman": "^0.2.0",
+    "@safecoin/anchor": "^0.26.0",
     "@types/debug": "^4.1.7",
     "@types/eslint": "^8.2.2",
     "@types/node": "^16.11.12",
