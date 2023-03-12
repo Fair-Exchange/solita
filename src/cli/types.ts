@@ -1,4 +1,4 @@
-import { RustbinConfig } from '@metaplex-foundation/rustbin'
+import { RustbinConfig } from '@safecoin/rustbin'
 import { Serializers, TypeAliases } from '../types'
 export { RustbinConfig }
 

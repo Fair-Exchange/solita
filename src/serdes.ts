@@ -42,7 +42,7 @@ export function serdePackageExportName(
 }
 
 export function extractSerdePackageFromImportStatment(importStatement: string) {
-  // Avoiding matching on 'beet' for 'beet-solana' by checking longer keys first
+  // Avoiding matching on 'beet' for 'beet-safecoin' by checking longer keys first
   for (const pack of packsByLengthDesc) {
     const exportName = serdePackages.get(pack)!
 

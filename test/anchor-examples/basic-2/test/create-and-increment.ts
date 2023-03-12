@@ -10,7 +10,7 @@ import {
   assertConfirmedTransaction,
   assertTransactionSummary,
   LOCALHOST,
-} from '@metaplex-foundation/amman'
+} from '@safecoin/amman'
 
 const idl = require('../idl/basic_2.json')
 

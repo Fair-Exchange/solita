@@ -14,8 +14,8 @@ import {
   assertTransactionSummary,
   LOCALHOST,
   Amman,
-} from '@metaplex-foundation/amman'
-import { initCusper, ErrorWithLogs } from '@metaplex-foundation/cusper'
+} from '@safecoin/amman'
+import { initCusper, ErrorWithLogs } from '@safecoin/cusper'
 import { strict as assert } from 'assert'
 
 const idl = require('../idl/basic_4.json')

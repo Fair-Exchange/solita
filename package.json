@@ -50,7 +50,7 @@
   "dependencies": {
     "@j0nnyboi/beet": "^0.4.1",
     "@j0nnyboi/beet-safecoin": "^0.3.0",
-    "@metaplex-foundation/rustbin": "^0.3.0",
+    "@safecoin/rustbin": "^0.3.0",
     "@safecoin/web3.js": "^1.36.0",
     "camelcase": "^6.2.1",
     "debug": "^4.3.3",
@@ -61,7 +61,7 @@
   },
   "devDependencies": {
     "@j0nnyboi/amman": "^0.2.0",
-    "@j0nnyboi/anchor": "^0.24.2",
+    "@safecoin/anchor": "^0.24.2",
     "@types/debug": "^4.1.7",
     "@types/eslint": "^8.2.2",
     "@types/node": "^16.11.12",

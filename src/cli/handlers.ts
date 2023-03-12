@@ -3,7 +3,7 @@ import {
   RustbinConfig,
   RustbinMatchReturn,
   ConfirmInstallArgs,
-} from '@metaplex-foundation/rustbin'
+} from '@safecoin/rustbin'
 import { spawn, SpawnOptionsWithoutStdio } from 'child_process'
 import { SolitaConfig, SolitaConfigAnchor, SolitaConfigShank } from './types'
 import path from 'path'

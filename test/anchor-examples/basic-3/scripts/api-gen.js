@@ -8,7 +8,7 @@ const { writeFile } = require('fs/promises')
 const {
   rustbinMatch,
   confirmAutoMessageConsole,
-} = require('@metaplex-foundation/rustbin')
+} = require('@safecoin/rustbin')
 const cargoToml = path.join(__dirname, '..', 'programs', 'puppet', 'Cargo.toml')
 
 const generatedIdlDir = path.join(__dirname, '..', 'idl')

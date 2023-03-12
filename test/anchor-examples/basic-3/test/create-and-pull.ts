@@ -5,7 +5,7 @@ import {
   assertConfirmedTransaction,
   assertTransactionSummary,
   LOCALHOST,
-} from '@metaplex-foundation/amman'
+} from '@safecoin/amman'
 import {
   createInitializeInstruction,
   createPullStringsInstruction,

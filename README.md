@@ -34,7 +34,7 @@ In order to use _solita_ with shank do the following:
 
 - add the `shank` library to your Rust project via `cargo add shank`
 - annotate your Rust program as outlined [here](https://docs.rs/crate/shank_macro/latest)
-- add `solita` to the dev dependencies of your SDK package via `yarn add -D @metaplex-foundation/solita`
+- add `solita` to the dev dependencies of your SDK package via `yarn add -D @safecoin/solita`
 - add a config similar to the below into `.solitarc.js` in your SDK package root
 
 ```js
@@ -73,7 +73,7 @@ Since we're writing the _shank_ binary to `.crates/` you should add that folder 
 In order to use _solita_ with anchor do the following:
 
 - annotate your Rust program with anchor attributes 
-- add `solita` to the dev dependencies of your SDK package via `yarn add -D @metaplex-foundation/solita`
+- add `solita` to the dev dependencies of your SDK package via `yarn add -D @safecoin/solita`
 - add a config similar to the below into `.solitarc.js` in your SDK package root
 
 ```js
@@ -163,11 +163,11 @@ the globally installed _shank_ binary matches the version of its library you're 
  
 ```js
 const path = require('path');
-const { Solita } = require('@metaplex-foundation/solita');
+const { Solita } = require('@safecoin/solita');
 const {
   rustbinMatch,
   confirmAutoMessageConsole,
-} = require('@metaplex-foundation/rustbin')
+} = require('@safecoin/rustbin')
 const { spawn } = require('child_process');
 
 const programDir = path.join(__dirname, '..', '..', 'program');
@@ -241,9 +241,9 @@ const path = require('path');
 const {
   rustbinMatch,
   confirmAutoMessageConsole,
-} = require('@metaplex-foundation/rustbin')
+} = require('@safecoin/rustbin')
 const { spawn } = require('child_process');
-const { Solita } = require('@metaplex-foundation/solita');
+const { Solita } = require('@safecoin/solita');
 const { writeFile } = require('fs/promises');
 
 const PROGRAM_NAME = 'candy_machine';

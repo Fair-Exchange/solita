@@ -10,6 +10,6 @@
     "amman:stop": "../../../node_modules/.bin/amman stop"
   },
   "dependencies": {
-    "@metaplex-foundation/cusper": "^0.0.2"
+    "@safecoin/cusper": "^0.0.2"
   }
 }
