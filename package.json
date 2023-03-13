@@ -27,7 +27,7 @@
     "doc:update": "./sh/update-docs",
     "doctoc": "doctoc README.md"
   },
-  "repository": "git@github.com:j0nnyboi/solita.git",
+  "repository": "git@github.com:fair-exhange/solita.git",
   "author": "Thorsten Lorenz <thlorenz@gmx.de>",
   "license": "Apache-2.0",
   "private": false,
