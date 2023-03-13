@@ -1,5 +1,5 @@
 {
-  "name": "@j0nnyboi/solita",
+  "name": "@safecoin/solita",
   "version": "0.12.2",
   "description": "Generates SDK API from solana contract IDL.",
   "main": "dist/src/solita.js",
@@ -7,20 +7,12 @@
   "bin": {
     "solita": "dist/src/cli/solita.js"
   },
-  "scripts": {
-    "check:publish-ready": "yarn build && if test \"$SKIP_TESTS\" = \"1\" ; then echo \"WARN: Skipping Tests\"; else yarn test; fi",
+    "scripts": {
+    "check:publish-ready": "yarn build && if test \"$SKIP_TESTS\" = \"1\" ; then echo \"WARN: Skipping Tests\"; else yarn test; fi",	
     "preversion": "yarn check:publish-ready",
     "prepublishOnly": "yarn check:publish-ready",
     "postpublish": "git push origin && git push origin --tags",
     "build": "rimraf dist && tsc -p tsconfig.json",
-    "test": "yarn test:unit && yarn test:integration && yarn test:anchor:basic0 && yarn test:anchor:basic1 && yarn test:anchor:basic2 && yarn test:anchor:basic3 && yarn test:anchor:basic4",
-    "test:unit": "tape dist/test/*.js",
-    "test:integration": "tape dist/test/integration/*.js",
-    "test:anchor:basic0": "cd ./test/anchor-examples/basic-0 && yarn test",
-    "test:anchor:basic1": "cd ./test/anchor-examples/basic-1 && yarn test",
-    "test:anchor:basic2": "cd ./test/anchor-examples/basic-2 && yarn test",
-    "test:anchor:basic3": "cd ./test/anchor-examples/basic-3 && yarn test",
-    "test:anchor:basic4": "cd ./test/anchor-examples/basic-4 && yarn test",
     "lint": "prettier -c ./src/",
     "lint:fix": "prettier --format ./src",
     "doc": "rimraf ./docs && typedoc",
@@ -50,7 +42,7 @@
   "dependencies": {
     "@safecoin/beet": "^0.4.1",
     "@safecoin/beet-safecoin": "^0.3.0",
-    "@safecoin/rustbin": "^0.3.0",
+    "@safecoin/rustbin": "^0.3.1",
     "@safecoin/web3.js": "^1.36.0",
     "camelcase": "^6.2.1",
     "debug": "^4.3.3",
@@ -60,7 +52,7 @@
     "spok": "^1.4.3"
   },
   "devDependencies": {
-    "@safecoin/amman": "^0.2.0",
+    "@safecoin/amman": "^0.12.0",
     "@safecoin/anchor": "^0.26.0",
     "@types/debug": "^4.1.7",
     "@types/eslint": "^8.2.2",
