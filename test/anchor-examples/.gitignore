@@ -1,4 +1,0 @@
-target/
-.anchor/
-**/src/generated
-Cargo.lock
